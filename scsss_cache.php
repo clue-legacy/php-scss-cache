@@ -67,7 +67,7 @@ class scsss_cache{
         
             header('Content-Type: text/css');
             header('Last-Modified: '.$cache->httpdate($cache['time']));
-            header('Expires: '.$cache->httpdate(time()+3600*24*360));                           // expire in 1 year
+            header('Expires: '.$cache->httpdate(strtotime('+1 year')));         // expire in 1 year
         
             if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])){
                 $ref = @strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']);
