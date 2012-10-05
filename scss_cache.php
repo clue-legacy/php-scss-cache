@@ -1,6 +1,5 @@
 <?php
 
-require_once dirname(__FILE__).'/../scssphp/scss.inc.php';
 
 class scsss_cache{
     private $debug = true;
@@ -143,16 +142,3 @@ class scsss_cache{
         return $content;
     }
 }
-
-$source = '@import "newdesign.css";';
-foreach(glob(ADMINPATH.'Page/*/newdesign.css') as $path){
-    $page = strtolower(basename(dirname($path)));
-    $source .= '
-#page-user-'.$page.'{
-     @import "'.$path.'";
-}';
-}
-
-$cache = new scsss_cache('newdesign.css');
-$cache->setQueryParam(NULL);
-$cache->serve($source);
