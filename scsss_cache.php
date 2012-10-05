@@ -13,14 +13,14 @@ class scsss_cache{
         $this->name = $name;
     }
     
-    private function httpdate($time){
+    private function httpDate($time){
         return gmdate('D, d M Y H:i:s',$time) . ' GMT';
     }
     
     private function httpPrepare($time){
         header('Content-Type: text/css');
-        header('Last-Modified: '.$cache->httpdate($time));
-        header('Expires: '.$cache->httpdate(strtotime('+1 year',$time)));         // expire in 1 year
+        header('Last-Modified: '.$this->httpDate($time));
+        header('Expires: '.$this->httpDate(strtotime('+1 year',$time)));        // expire in 1 year
         
         if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])){
             $ref = @strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']);
@@ -151,4 +151,5 @@ foreach(glob(ADMINPATH.'Page/*/newdesign.css') as $path){
 }
 
 $cache = new scsss_cache('newdesign.css');
+$cache->setQueryParam(NULL);
 $cache->serve($source);
