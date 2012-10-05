@@ -17,6 +17,27 @@ class scsss_cache{
         return gmdate('D, d M Y H:i:s',$time) . ' GMT';
     }
     
+    private function httpPrepare($time){
+        header('Content-Type: text/css');
+        header('Last-Modified: '.$cache->httpdate($time));
+        header('Expires: '.$cache->httpdate(strtotime('+1 year',$time)));         // expire in 1 year
+        
+        if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])){
+            $ref = @strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']);
+            if($ref == $time){
+                header(' ',true,304); // not modified
+                exit();
+            }
+        }
+        
+        ob_start('ob_gzhandler'); // enable compression
+    }
+    
+    public function setQueryParam($queryParam){
+        $this->queryParam = $queryParam;
+        return $this;
+    }
+    
     public function serve($source){
         $refresh = false;
         
@@ -60,24 +81,12 @@ class scsss_cache{
         }
         
         if(!$refresh){
-            if(!isset($_GET[$this->queryParam]) || $_GET[$this->queryParam] != $cache['time']){                     // old or no timestamp supplied
+            if($this->queryParam !== null && !isset($_GET[$this->queryParam]) || $_GET[$this->queryParam] != $cache['time']){                     // old or no timestamp supplied
                 header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301);                        // permanently moved
                 exit();
             }
-        
-            header('Content-Type: text/css');
-            header('Last-Modified: '.$cache->httpdate($cache['time']));
-            header('Expires: '.$cache->httpdate(strtotime('+1 year')));         // expire in 1 year
-        
-            if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])){
-                $ref = @strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']);
-                if($ref == $cache['time']){
-                    header(' ',true,304); // not modified
-                    exit();
-                }
-            }
-        
-            ob_start('ob_gzhandler'); // enable compression
+            
+            $this->httpPrepare($cache['time']);
             readfile($cache['target']);
             exit();
         }
@@ -115,10 +124,15 @@ class scsss_cache{
         file_put_contents($cache['target'],$content);
         xcache_set($this->name,$cache);
         
-        if($this->debug){
-            echo '/* goto ?'.$this->queryParam.'='.$cache['time'].' */';
+        if($this->queryParam !== null){
+            if($this->debug){
+                echo '/* goto ?'.$this->queryParam.'='.$cache['time'].' */';
+            }else{
+                header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301);                           // redirect to new cached file (permanently moved)
+            }
         }else{
-            header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301);                           // redirect to new cached file (permanently moved)
+            $this->httpPrepare($cache['time']);
+            echo $content;
         }
     }
 }
