@@ -3,7 +3,7 @@
 require_once dirname(__FILE__).'/../scssphp/scss.inc.php';
 
 class scsss_cache{
-    private $debug = false;
+    private $debug = true;
     
     private $queryParam = 'm';
     
