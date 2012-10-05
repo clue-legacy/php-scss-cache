@@ -7,6 +7,12 @@ class scsss_cache{
     
     private $queryParam = 'm';
     
+    private $name = 'newdesign.css.php';
+    
+    public function __construct($name){
+        $this->name = $name;
+    }
+    
     private function httpdate($time){
         return gmdate('D, d M Y H:i:s',$time) . ' GMT';
     }
@@ -14,7 +20,7 @@ class scsss_cache{
     public function serve($source){
         $refresh = false;
         
-        $cache = xcache_get('newdesign.css.php');
+        $cache = xcache_get($this->name);
         if(!$cache){
             $refresh = true;
         }
@@ -34,7 +40,7 @@ class scsss_cache{
         }
         
         if(!$refresh){
-            // search for new page-'newdesign.css' files not already in the cache
+            // check if scss input source has changed
             $hash = md5($source);
             if($cache['hash'] !== $hash){
                 if($this->debug) echo '/* input source hash changed */';
@@ -84,7 +90,7 @@ class scsss_cache{
         $oldcache = $cache;
         $cache = array();
         $cache['time']   = time();
-        $cache['target'] = '/var/run/newdesign.out.csss';
+        $cache['target'] = '/var/run/'.$this->name.'.out.css';
         $cache['hash']   = md5($source);
 
         
@@ -107,7 +113,7 @@ class scsss_cache{
         }
         
         file_put_contents($cache['target'],$content);
-        xcache_set('newdesign.css.php',$cache);
+        xcache_set($this->name,$cache);
         
         if($this->debug){
             echo '/* goto ?'.$this->queryParam.'='.$cache['time'].' */';
@@ -126,5 +132,5 @@ foreach(glob(ADMINPATH.'Page/*/newdesign.css') as $path){
 }';
 }
 
-$cache = new scsss_cache();
+$cache = new scsss_cache('newdesign.css');
 $cache->serve($source);
