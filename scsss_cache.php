@@ -11,7 +11,7 @@ class scsss_cache{
         return gmdate('D, d M Y H:i:s',$time) . ' GMT';
     }
     
-    public function serve(){
+    public function serve($source){
         $refresh = false;
         
         $cache = xcache_get('newdesign.css.php');
@@ -19,7 +19,7 @@ class scsss_cache{
             $refresh = true;
         }
         /*
-         $cache = array();
+        $cache = array();
         $cache['time'] = time() - 3600;
         $cache['files'] = array();
         */
@@ -35,12 +35,10 @@ class scsss_cache{
         
         if(!$refresh){
             // search for new page-'newdesign.css' files not already in the cache
-            foreach(glob(__DIR__.'/*/newdesign.css') as $file){
-                if(!in_array($file,$cache['files'],true)){
-                    if($this->debug) echo '/* new '.$file.' */';
-                    $refresh = true;
-                    break;
-                }
+            $hash = md5($source);
+            if($cache['hash'] !== $hash){
+                if($this->debug) echo '/* input source hash changed */';
+                $refresh = true;
             }
         }
         
@@ -85,22 +83,10 @@ class scsss_cache{
         
         $oldcache = $cache;
         $cache = array();
-        $cache['time'] = time();
+        $cache['time']   = time();
         $cache['target'] = '/var/run/newdesign.out.csss';
-        
-        
-        $source = '@import "newdesign.css";';
-        
-        foreach(glob(ADMINPATH.'Page/*/newdesign.css') as $path){
-            $page = basename(dirname($path));
-            //$page = lcfirst($page);
-            //$page = strtolower(substr($page,0,1)).substr($page,1);
-            $page = strtolower($page);
-            $source .= '
-#page-user-'.$page.'{
-     @import "'.$path.'";
-}';
-        }
+        $cache['hash']   = md5($source);
+
         
         $formatter = new scss_formatter_compressed();
         
@@ -131,5 +117,14 @@ class scsss_cache{
     }
 }
 
+$source = '@import "newdesign.css";';
+foreach(glob(ADMINPATH.'Page/*/newdesign.css') as $path){
+    $page = strtolower(basename(dirname($path)));
+    $source .= '
+#page-user-'.$page.'{
+     @import "'.$path.'";
+}';
+}
+
 $cache = new scsss_cache();
-$cache->serve();
+$cache->serve($source);
