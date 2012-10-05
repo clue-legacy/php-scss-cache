@@ -85,12 +85,12 @@ class scsss_cache{
         if(!$refresh){
             if($this->queryParam !== null && !isset($_GET[$this->queryParam]) || $_GET[$this->queryParam] != $cache['time']){                     // old or no timestamp supplied
                 header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301);                        // permanently moved
-                exit();
+                return;
             }
             
             $this->httpPrepare($cache['time']);
             readfile($cache['target']);
-            exit();
+            return;
         }
         
         // TODO: lock and retry...
@@ -109,7 +109,8 @@ class scsss_cache{
         }
         catch(Exception $e){
             header(' ',true,500); // server error
-            die('/* error: '.$e->getMessage().' */');
+            echo '/* error: '.$e->getMessage().' */';
+            return;
         }
         
         file_put_contents($cache['target'],$content);
