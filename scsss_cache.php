@@ -96,29 +96,18 @@ class scsss_cache{
         // check cache again
         // otherwise continue:
         
-        $oldcache = $cache;
         $cache = array();
         $cache['time']   = time();
         $cache['target'] = '/var/run/'.$this->name.'.out.css';
         $cache['hash']   = md5($source);
-
-        
-        $formatter = new scss_formatter_compressed();
-        
-        $scss = new scssc();
-        //$scss->setFormatter($formatter);
+        $cache['files']  = array();
         
         try{
-            $content = $scss->compile($source);
+            $content = $this->compile($source,$cache);
         }
         catch(Exception $e){
             header(' ',true,500); // server error
             die('/* error: '.$e->getMessage().' */');
-        }
-        
-        $cache['files'] = array();
-        foreach($scss->getParsedFiles() as $file){
-            $cache['files'] []= realpath($file);
         }
         
         file_put_contents($cache['target'],$content);
@@ -134,6 +123,21 @@ class scsss_cache{
             $this->httpPrepare($cache['time']);
             echo $content;
         }
+    }
+    
+    protected function compile($source,&$cache){
+        $formatter = new scss_formatter_compressed();
+        
+        $scss = new scssc();
+        $scss->setFormatter($formatter);
+        
+        $content = $scss->compile($source);
+        
+        foreach($scss->getParsedFiles() as $file){
+            $cache['files'][] = realpath($file);
+        }
+        
+        return $content;
     }
 }
 
