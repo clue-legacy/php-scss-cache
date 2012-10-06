@@ -57,7 +57,6 @@ class scsss_cache{
             if(!is_file($cache['target'])){
                 if($this->debug) echo '/* target '.$cache['target'].' missing */';
                 $refresh = true;
-                break;
             }
         }
         
@@ -82,7 +81,7 @@ class scsss_cache{
         }
         
         if(!$refresh){
-            if($this->queryParam !== null && !isset($_GET[$this->queryParam]) || $_GET[$this->queryParam] != $cache['time']){                     // old or no timestamp supplied
+            if($this->queryParam !== null && (!isset($_GET[$this->queryParam]) || $_GET[$this->queryParam] != $cache['time'])){                     // old or no timestamp supplied
                 header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301);                        // permanently moved
                 return;
             }
