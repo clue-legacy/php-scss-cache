@@ -98,7 +98,7 @@ class scsss_cache{
         
         $cache = array();
         $cache['time']   = time();
-        $cache['target'] = '/var/run/'.$this->name.'.out.css';
+        $cache['target'] = $this->tempnam($this->name);
         $cache['hash']   = md5($source);
         $cache['files']  = array();
         
@@ -111,7 +111,9 @@ class scsss_cache{
             return;
         }
         
-        file_put_contents($cache['target'],$content);
+        if(file_put_contents($cache['target'],$content,LOCK_EX) === false){
+            throw new Exception('Unable to write compiled source to target cache file');
+        }
         xcache_set($this->name,$cache);
         
         if($this->queryParam !== null){
@@ -124,6 +126,11 @@ class scsss_cache{
             $this->httpPrepare($cache['time']);
             echo $content;
         }
+    }
+    
+    protected function tempnam($name){
+        //'/var/run/'.$name.'.out.css';
+        return tempnam(sys_get_temp_dir(),$name);
     }
     
     protected function compile($source,&$cache){
