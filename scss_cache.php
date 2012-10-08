@@ -1,6 +1,5 @@
 <?php
 
-
 class scss_cache{
     private $debug = true;
     
@@ -87,6 +86,7 @@ class scss_cache{
             }
             
             $this->httpPrepare($cache['time']);
+            if($this->debug) echo '/* read from cache */';
             readfile($cache['target']);
             return;
         }
@@ -117,12 +117,9 @@ class scss_cache{
         xcache_set($this->name,$cache);
         
         if($this->queryParam !== null){
-            if($this->debug){
-                echo '/* goto ?'.$this->queryParam.'='.$cache['time'].' */';
-            }else{
-                header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301);                           // redirect to new cached file (permanently moved)
-            }
+            header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301); // redirect to new cached file (permanently moved)
         }else{
+            if($this->debug) echo '/* new cache target created */';
             $this->httpPrepare($cache['time']);
             echo $content;
         }
