@@ -52,48 +52,13 @@ class scss_cache{
         return $this;
     }
     
+    public function isCached(){
+        return ($this->getCacheChecked() !== null);
+    }
+    
     public function serve(){
-        $refresh = false;
-        
-        $cache = xcache_get($this->name);
-        if(!$cache){
-            $refresh = true;
-        }
-        /*
-        $cache = array();
-        $cache['time'] = time() - 3600;
-        $cache['files'] = array();
-        */
-        
-        if(!$refresh){
-            // check cache file
-            if(!is_file($cache['target'])){
-                if($this->debug) echo '/* target '.$cache['target'].' missing */';
-                $refresh = true;
-            }
-        }
-        
-        if(!$refresh){
-            // check if scss input source has changed
-            $hash = md5($this->source);
-            if($cache['hash'] !== $hash){
-                if($this->debug) echo '/* input source hash changed */';
-                $refresh = true;
-            }
-        }
-        
-        if(!$refresh){
-            // check all files from cache for changes ever since cache was created
-            foreach($cache['files'] as $file){
-                if(!is_file($file) || filemtime($file) > $cache['time']){
-                    if($this->debug) echo '/* updated '.$file.' */';
-                    $refresh = true;
-                    break;
-                }
-            }
-        }
-        
-        if(!$refresh){
+        $cache = $this->getCacheChecked();
+        if($cache !== null){
             if($this->queryParam !== null && (!isset($_GET[$this->queryParam]) || $_GET[$this->queryParam] != $cache['time'])){                     // old or no timestamp supplied
                 header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301);                        // permanently moved
                 return;
@@ -137,6 +102,35 @@ class scss_cache{
             $this->httpPrepare($cache['time']);
             echo $content;
         }
+    }
+    
+    protected function getCacheChecked(){
+        $cache = xcache_get($this->name);
+        if(!$cache){
+            return null;
+        }
+    
+        // check cache file
+        if(!is_file($cache['target'])){
+            if($this->debug) echo '/* target '.$cache['target'].' missing */';
+            return null;
+        }
+    
+        // check if scss input source has changed
+        $hash = md5($this->source);
+        if($cache['hash'] !== $hash){
+            if($this->debug) echo '/* input source hash changed */';
+            return null;
+        }
+    
+        // check all files from cache for changes ever since cache was created
+        foreach($cache['files'] as $file){
+            if(!is_file($file) || filemtime($file) > $cache['time']){
+                if($this->debug) echo '/* updated '.$file.' */';
+                return null;
+            }
+        }
+        return $cache;
     }
     
     protected function tempnam(){
