@@ -75,6 +75,8 @@ class scss_cache{
         // check cache again
         // otherwise continue:
         
+        $this->purge();
+        
         $cache = array();
         $cache['time']   = time();
         $cache['target'] = $this->tempnam();
@@ -101,6 +103,16 @@ class scss_cache{
             if($this->debug) echo '/* new cache target created */';
             $this->httpPrepare($cache['time']);
             echo $content;
+        }
+    }
+    
+    public function purge(){
+        $cache = xcache_get($this->name);
+        if($cache){
+            if(is_writeable($cache['target'])){
+                unlink($cache['target']);
+            }
+            xcache_unset($this->name);
         }
     }
     
