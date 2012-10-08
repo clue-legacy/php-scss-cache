@@ -1,7 +1,7 @@
 <?php
 
 
-class scsss_cache{
+class scss_cache{
     private $debug = true;
     
     private $queryParam = 'm';
