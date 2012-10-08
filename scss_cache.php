@@ -1,9 +1,9 @@
 <?php
 
 class scss_cache{
-    private $debug = true;
+    private $debug = false;
     
-    private $queryParam = 'm';
+    private $queryParam;
     
     private $source;
     private $name;
