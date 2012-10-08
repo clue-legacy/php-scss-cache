@@ -5,9 +5,16 @@ class scss_cache{
     
     private $queryParam = 'm';
     
-    private $name = 'newdesign.css.php';
+    private $source;
+    private $name;
     
-    public function __construct($name){
+    public function __construct($source,$name=null){
+        $this->source = $source;
+        
+        if($name === null){
+            $temp = debug_backtrace();
+            $name = (isset($temp[0]['file'])) ? $temp[0]['file'].$temp[0]['line'] : 'scss_cache';
+        }
         $this->name = $name;
     }
     
@@ -38,7 +45,7 @@ class scss_cache{
         return $this;
     }
     
-    public function serve($source){
+    public function serve(){
         $refresh = false;
         
         $cache = xcache_get($this->name);
@@ -61,7 +68,7 @@ class scss_cache{
         
         if(!$refresh){
             // check if scss input source has changed
-            $hash = md5($source);
+            $hash = md5($this->source);
             if($cache['hash'] !== $hash){
                 if($this->debug) echo '/* input source hash changed */';
                 $refresh = true;
@@ -99,11 +106,11 @@ class scss_cache{
         $cache = array();
         $cache['time']   = time();
         $cache['target'] = $this->tempnam($this->name);
-        $cache['hash']   = md5($source);
+        $cache['hash']   = md5($this->source);
         $cache['files']  = array();
         
         try{
-            $content = $this->compile($source,$cache);
+            $content = $this->compile($cache);
         }
         catch(Exception $e){
             header(' ',true,500); // server error
@@ -139,10 +146,10 @@ class scss_cache{
         return $scssc;
     }
     
-    protected function compile($source,&$cache){
+    protected function compile(&$cache){
         $scssc = $this->scssc();
         
-        $content = $scssc->compile($source);
+        $content = $scssc->compile($this->source);
         
         foreach($scssc->getParsedFiles() as $file){
             $cache['files'][] = realpath($file);
