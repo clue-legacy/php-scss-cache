@@ -8,6 +8,13 @@ class scss_cache{
     private $source;
     private $name;
     
+    public static function file($path,$name=null){
+        if($name === null){
+            $name = basename($path).'-'.substr(md5($path),-5);
+        }
+        return new self('@import "'.$path.'";',$name);
+    }
+    
     public function __construct($source,$name=null){
         $this->source = $source;
         
