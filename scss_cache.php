@@ -130,15 +130,21 @@ class scss_cache{
         return tempnam(sys_get_temp_dir(),$name);
     }
     
-    protected function compile($source,&$cache){
+    protected function scssc(){
         $formatter = new scss_formatter_compressed();
+    
+        $scssc = new scssc();
+        $scssc->setFormatter($formatter);
+    
+        return $scssc;
+    }
+    
+    protected function compile($source,&$cache){
+        $scssc = $this->scssc();
         
-        $scss = new scssc();
-        $scss->setFormatter($formatter);
+        $content = $scssc->compile($source);
         
-        $content = $scss->compile($source);
-        
-        foreach($scss->getParsedFiles() as $file){
+        foreach($scssc->getParsedFiles() as $file){
             $cache['files'][] = realpath($file);
         }
         
