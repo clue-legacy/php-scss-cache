@@ -105,7 +105,7 @@ class scss_cache{
         
         $cache = array();
         $cache['time']   = time();
-        $cache['target'] = $this->tempnam($this->name);
+        $cache['target'] = $this->tempnam();
         $cache['hash']   = md5($this->source);
         $cache['files']  = array();
         
@@ -132,9 +132,9 @@ class scss_cache{
         }
     }
     
-    protected function tempnam($name){
-        //'/var/run/'.$name.'.out.css';
-        return tempnam(sys_get_temp_dir(),$name);
+    protected function tempnam(){
+        //'/var/run/'.$this->name.'.out.css';
+        return tempnam(sys_get_temp_dir(),$this->name);
     }
     
     protected function scssc(){
