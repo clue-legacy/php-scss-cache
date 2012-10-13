@@ -12,6 +12,6 @@ foreach(glob(dirname(__FILE__).'/Page/*/newdesign.scss') as $path){
 }';
 }
 
-$cache = new scsss_cache('newdesign.css');
+$cache = new scss_cache($source);
 // $cache->setQueryParam(NULL);
-$cache->serve($source);
+$cache->serve();
