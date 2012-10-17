@@ -8,6 +8,13 @@ class scss_cache{
     private $source;
     private $name;
     
+    /**
+     * instanciate new cache for the given SCSS file path
+     * 
+     * @param string $path path to import via SCSS
+     * @param string|null $name optional name used to reference cache, defaults to name derived from given file name
+     * @return scss_cache
+     */
     public static function file($path,$name=null){
         if($name === null){
             $name = basename($path).'-'.substr(md5($path),-5);
@@ -15,6 +22,12 @@ class scss_cache{
         return new self('@import "'.$path.'";',$name);
     }
     
+    /**
+     * instanciate new cache for given SCSS input source
+     * 
+     * @param string      $source input SCSS source
+     * @param string|null $name   name to use for caching this source
+     */
     public function __construct($source,$name=null){
         $this->source = $source;
         
@@ -47,15 +60,38 @@ class scss_cache{
         ob_start('ob_gzhandler'); // enable compression
     }
     
+    /**
+     * set option query param to generate unique URLs whenever the source changes
+     * 
+     * once set, this allows to send HTTP headers to indicate this resorce
+     * never expires. Browsers will therefor not try to access this resource
+     * again. Once a change has been detected, the resource has to be requested
+     * with a different URI (i.e. a new query parameter is added every time the
+     * resource changes - aka cache busting)
+     * 
+     * @param string|NULL $queryParam parameter name to use or NULL=disable
+     * @return scss_cache $this (chainable)
+     */
     public function setQueryParam($queryParam){
         $this->queryParam = $queryParam;
         return $this;
     }
     
+    /**
+     * check whether the source is cache or needs to be recompiled
+     * 
+     * @return boolean
+     */
     public function isCached(){
         return ($this->getCacheChecked() !== null);
     }
     
+    /**
+     * serve resulting CSS via HTTP (cache wherever possible)
+     * 
+     * @return void
+     * @throws Exception on error
+     */
     public function serve(){
         $cache = $this->getCacheChecked();
         if($cache !== null){
@@ -106,6 +142,11 @@ class scss_cache{
         }
     }
     
+    /**
+     * purge (delete) cache files and cache meta data
+     *
+     * @return void
+     */
     public function purge(){
         $cache = xcache_get($this->name);
         if($cache){
@@ -145,11 +186,24 @@ class scss_cache{
         return $cache;
     }
     
+    /**
+     * create new temporary filename to write output cache to
+     * 
+     * @return string
+     */
     protected function tempnam(){
         //'/var/run/'.$this->name.'.out.css';
         return tempnam(sys_get_temp_dir(),$this->name);
     }
     
+    /**
+     * create new SCSS compiler instance
+     * 
+     * can be overwritten in order to pass custom formatter options, custom
+     * import paths, etc.
+     * 
+     * @return scssc
+     */
     protected function scssc(){
         $formatter = new scss_formatter_compressed();
     
@@ -159,6 +213,13 @@ class scss_cache{
         return $scssc;
     }
     
+    /**
+     * compile local SCSS source and return resulting CSS
+     * 
+     * @param array $cache
+     * @return string
+     * @throws Exception on error
+     */
     protected function compile(&$cache){
         $scssc = $this->scssc();
         
