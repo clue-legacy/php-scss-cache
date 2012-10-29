@@ -1,0 +1,13 @@
+{
+    "name": "clue/scsss-cache",
+    "type": "library",
+    "description": "Automatically compile your SCSS files only when they actually change",
+    "homepage": "https://github.com/clue/scss-cache",
+    "license": "MIT",
+    "autoload": {
+        "classmap": ["scss_cache.php"]
+    },
+    "require": {
+        "leafo/scssphp": "dev-master"
+    }
+}
