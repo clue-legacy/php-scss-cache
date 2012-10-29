@@ -1,7 +1,7 @@
 <?php
 
 class scss_cache{
-    private $debug = false;
+    protected $debug = false;
     
     private $queryParam;
     
@@ -44,7 +44,11 @@ class scss_cache{
             }
         }
         
-        ob_start('ob_gzhandler'); // enable compression
+        // if nothing has been sent (or is to be sent due to parent output buffer)
+        if(!headers_sent() && !ob_get_level()){
+            // enable compression
+            ob_start('ob_gzhandler');
+        }
     }
     
     public function setQueryParam($queryParam){
