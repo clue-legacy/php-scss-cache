@@ -40,7 +40,7 @@ class scss_cache{
             $ref = @strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']);
             if($ref == $time){                                                 // same as cached time, so stop transfering actual content
                 if($this->debug){
-                    echo '/* HTTP not modified */';
+                    echo '/* HTTP not modified ('.$time.') */';
                 }else{
                     header(' ',true,304); // not modified
                     exit();
@@ -73,7 +73,7 @@ class scss_cache{
             }
             
             $this->httpPrepare($cache['time']);
-            if($this->debug) echo '/* read from cache */';
+            if($this->debug) echo '/* read from cache ('.$cache['time'].') */';
             readfile($cache['target']);
             return;
         }
@@ -108,7 +108,7 @@ class scss_cache{
         if($this->queryParam !== null){
             header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301); // redirect to new cached file (permanently moved)
         }else{
-            if($this->debug) echo '/* new cache target created */';
+            if($this->debug) echo '/* new cache target created ('.$cache['time'].') */';
             $this->httpPrepare($cache['time']);
             echo $content;
         }
@@ -132,21 +132,21 @@ class scss_cache{
     
         // check cache file
         if(!is_file($cache['target'])){
-            if($this->debug) echo '/* target '.$cache['target'].' missing */';
+            if($this->debug) echo '/* target '.$cache['target'].' ('.$cache['time'].') missing */';
             return null;
         }
     
         // check if scss input source has changed
         $hash = md5($this->source);
         if($cache['hash'] !== $hash){
-            if($this->debug) echo '/* input source hash changed */';
+            if($this->debug) echo '/* input source hash ('.$cache['time'].') changed */';
             return null;
         }
     
         // check all files from cache for changes ever since cache was created
         foreach($cache['files'] as $file){
             if(!is_file($file) || filemtime($file) > $cache['time']){
-                if($this->debug) echo '/* updated '.$file.' */';
+                if($this->debug) echo '/* updated '.$file.' (file:'.filemtime($file).' cache:'.$cache['time'].') */';
                 return null;
             }
         }
