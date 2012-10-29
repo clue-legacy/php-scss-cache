@@ -32,15 +32,19 @@ class scss_cache{
     private function httpPrepare($time){
         header('Content-Type: text/css');
         header('Last-Modified: '.$this->httpDate($time));
-        if($this->queryParam !== NULL){                                        // virtually "never" expire this resource if a new query param is added every time the resource changes
+        if($this->queryParam !== null && !$this->debug){                                        // virtually "never" expire this resource if a new query param is added every time the resource changes
             header('Expires: '.$this->httpDate(strtotime('+1 year',$time)));    // expire in 1 year ("never" request this resource again, always keep in cache)
         }
         
         if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])){                         // previous last-modified header received
             $ref = @strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']);
             if($ref == $time){                                                 // same as cached time, so stop transfering actual content
-                header(' ',true,304); // not modified
-                exit();
+                if($this->debug){
+                    echo '/* HTTP not modified */';
+                }else{
+                    header(' ',true,304); // not modified
+                    exit();
+                }
             }
         }
         
