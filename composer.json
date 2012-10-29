@@ -1,5 +1,5 @@
 {
-    "name": "clue/scsss-cache",
+    "name": "clue/scss-cache",
     "type": "library",
     "description": "Automatically compile your SCSS files only when they actually change",
     "homepage": "https://github.com/clue/scss-cache",
