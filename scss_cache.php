@@ -3,10 +3,10 @@
 class scss_cache{
     protected $debug = false;
     
-    private $queryParam;
+    protected $queryParam;
     
-    private $source;
-    private $name;
+    protected $source;
+    protected $name;
     
     /**
      * instanciate new cache for the given SCSS file path
@@ -38,11 +38,11 @@ class scss_cache{
         $this->name = $name;
     }
     
-    private function httpDate($time){
+    protected function httpDate($time){
         return gmdate('D, d M Y H:i:s',$time) . ' GMT';
     }
     
-    private function httpPrepare($time){
+    protected function httpPrepare($time){
         header('Content-Type: text/css');
         header('Last-Modified: '.$this->httpDate($time));
         if($this->queryParam !== null && !$this->debug){                                        // virtually "never" expire this resource if a new query param is added every time the resource changes
