@@ -95,10 +95,12 @@ class scss_cache{
     }
     
     /**
-     * serve resulting CSS via HTTP (cache wherever possible)
+     * serve up-to-date resulting CSS via HTTP (recompile if neccessary)
      * 
      * @return void
      * @throws Exception on error
+     * @uses self::getCacheChecked()
+     * @uses self::update()
      */
     public function serve(){
         $cache = $this->getCacheChecked();
@@ -119,27 +121,15 @@ class scss_cache{
         // check cache again
         // otherwise continue:
         
-        $this->purge();
-        
         $cache = array();
-        $cache['time']   = time();
-        $cache['target'] = $this->tempnam();
-        $cache['hash']   = md5($this->source);
-        $cache['files']  = array();
-        
         try{
-            $content = $this->compile($cache);
+            $content = $this->update($cache);
         }
         catch(Exception $e){
             header(' ',true,500); // server error
             echo '/* error: '.$e->getMessage().' */';
             return;
         }
-        
-        if(file_put_contents($cache['target'],$content,LOCK_EX) === false){
-            throw new Exception('Unable to write compiled source to target cache file');
-        }
-        xcache_set($this->name,$cache);
         
         if($this->queryParam !== null){
             header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301); // redirect to new cached file (permanently moved)
@@ -163,6 +153,62 @@ class scss_cache{
             }
             xcache_unset($this->name);
         }
+    }
+    
+    /**
+     * refresh 
+     * 
+     * @param array $cache
+     * @throws Exception
+     * @return string
+     */
+    protected function update(&$cache=null){
+    	$this->purge();
+    	
+    	$cache = array();
+    	$cache['time']   = time();
+    	$cache['target'] = $this->tempnam();
+    	$cache['hash']   = md5($this->source);
+    	$cache['files']  = array();
+    	
+    	$content = $this->compile($cache);
+    	
+    	if(file_put_contents($cache['target'],$content,LOCK_EX) === false){
+    		throw new Exception('Unable to write compiled source to target cache file');
+    	}
+    	xcache_set($this->name,$cache);
+    	
+    	return $content;
+    }
+    
+    /**
+     * get up-to-date cache meta data (re-compile if neccessary)
+     * 
+     * @return array
+     * @uses self::getCacheChecked()
+     * @uses self::update()
+     */
+    public function getMeta(){
+    	$cache = $this->getCacheChecked();
+    	if(!$cache){
+    		$this->update($cache);
+    	}
+    	return $cache;
+    }
+    
+    /**
+     * get up-to-date css output (re-compile if neccessary)
+     * 
+     * @return string
+     * @uses self::getCacheChecked()
+     * @uses self::update()
+     */
+    public function getOutput(){
+    	$cache = $this->getCacheChecked();
+    	if($cache){
+    		return file_get_contents($cache['target']);
+    	}
+    	return $this->update($cache);
     }
     
     protected function getCacheChecked(){
