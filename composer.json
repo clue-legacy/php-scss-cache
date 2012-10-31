@@ -1,7 +1,7 @@
 {
     "name": "clue/scss-cache",
     "type": "library",
-    "description": "Automatically compile your SCSS files only when they actually change",
+    "description": "Automatically compile your SCSS (sassy CSS from SASS) to plain CSS whenever they actually change",
     "homepage": "https://github.com/clue/scss-cache",
     "license": "MIT",
     "autoload": {
