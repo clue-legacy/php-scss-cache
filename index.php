@@ -1,7 +1,6 @@
 <?php
 
-require_once dirname(__FILE__).'/../scssphp/scss.inc.php';
-require_once dirname(__FILE__).'/scss_cache.php';
+(include_once dirname(__FILE__).'/vendor/autoload.php') OR die('ERROR: composer autoloader not found, run "composer install" or see README for instructions'.PHP_EOL);
 
 $source = '@import "newdesign.scss";';
 foreach(glob(dirname(__FILE__).'/Page/*/newdesign.scss') as $path){
@@ -12,6 +11,6 @@ foreach(glob(dirname(__FILE__).'/Page/*/newdesign.scss') as $path){
 }';
 }
 
-$cache = new scsss_cache('newdesign.css');
+$cache = new scss_cache($source);
 // $cache->setQueryParam(NULL);
-$cache->serve($source);
+$cache->serve();
