@@ -91,7 +91,7 @@ class scss_cache{
      * @return boolean
      */
     public function isCached(){
-        return ($this->getCacheChecked() !== null);
+        return ($this->getMetaChecked() !== null);
     }
     
     /**
@@ -99,20 +99,20 @@ class scss_cache{
      * 
      * @return void
      * @throws Exception on error
-     * @uses self::getCacheChecked()
+     * @uses self::getMetaChecked()
      * @uses self::update()
      */
     public function serve(){
-        $cache = $this->getCacheChecked();
-        if($cache !== null){
-            if($this->queryParam !== null && (!isset($_GET[$this->queryParam]) || $_GET[$this->queryParam] != $cache['time'])){                     // old or no timestamp supplied
-                header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301);                        // permanently moved
+        $meta = $this->getMetaChecked();
+        if($meta !== null){
+            if($this->queryParam !== null && (!isset($_GET[$this->queryParam]) || $_GET[$this->queryParam] != $meta['time'])){                     // old or no timestamp supplied
+                header('Location: ?'.$this->queryParam.'='.$meta['time'],true,301);                        // permanently moved
                 return;
             }
             
-            $this->httpPrepare($cache['time']);
-            if($this->debug) echo '/* read from cache ('.$cache['time'].') */';
-            readfile($cache['target']);
+            $this->httpPrepare($meta['time']);
+            if($this->debug) echo '/* read from cache ('.$meta['time'].') */';
+            readfile($meta['target']);
             return;
         }
         
@@ -121,9 +121,9 @@ class scss_cache{
         // check cache again
         // otherwise continue:
         
-        $cache = array();
+        $meta = array();
         try{
-            $content = $this->update($cache);
+            $content = $this->update($meta);
         }
         catch(Exception $e){
             header(' ',true,500); // server error
@@ -132,10 +132,10 @@ class scss_cache{
         }
         
         if($this->queryParam !== null){
-            header('Location: ?'.$this->queryParam.'='.$cache['time'],true,301); // redirect to new cached file (permanently moved)
+            header('Location: ?'.$this->queryParam.'='.$meta['time'],true,301); // redirect to new cached file (permanently moved)
         }else{
-            if($this->debug) echo '/* new cache target created ('.$cache['time'].') */';
-            $this->httpPrepare($cache['time']);
+            if($this->debug) echo '/* new cache target created ('.$meta['time'].') */';
+            $this->httpPrepare($meta['time']);
             echo $content;
         }
     }
@@ -146,10 +146,10 @@ class scss_cache{
      * @return void
      */
     public function purge(){
-        $cache = xcache_get($this->name);
-        if($cache){
-            if(is_writeable($cache['target'])){
-                unlink($cache['target']);
+        $meta = xcache_get($this->name);
+        if($meta){
+            if(is_writeable($meta['target'])){
+                unlink($meta['target']);
             }
             xcache_unset($this->name);
         }
@@ -158,25 +158,25 @@ class scss_cache{
     /**
      * refresh 
      * 
-     * @param array $cache
+     * @param array $meta
      * @throws Exception
      * @return string
      */
-    protected function update(&$cache=null){
+    protected function update(&$meta=null){
     	$this->purge();
     	
-    	$cache = array();
-    	$cache['time']   = time();
-    	$cache['target'] = $this->tempnam();
-    	$cache['hash']   = md5($this->source);
-    	$cache['files']  = array();
+    	$meta = array();
+    	$meta['time']   = time();
+    	$meta['target'] = $this->tempnam();
+    	$meta['hash']   = md5($this->source);
+    	$meta['files']  = array();
     	
-    	$content = $this->compile($cache);
+    	$content = $this->compile($meta);
     	
-    	if(file_put_contents($cache['target'],$content,LOCK_EX) === false){
+    	if(file_put_contents($meta['target'],$content,LOCK_EX) === false){
     		throw new Exception('Unable to write compiled source to target cache file');
     	}
-    	xcache_set($this->name,$cache);
+    	xcache_set($this->name,$meta);
     	
     	return $content;
     }
@@ -185,59 +185,59 @@ class scss_cache{
      * get up-to-date cache meta data (re-compile if neccessary)
      * 
      * @return array
-     * @uses self::getCacheChecked()
+     * @uses self::getMetaChecked()
      * @uses self::update()
      */
     public function getMeta(){
-    	$cache = $this->getCacheChecked();
-    	if(!$cache){
-    		$this->update($cache);
+    	$meta = $this->getMetaChecked();
+    	if(!$meta){
+    		$this->update($meta);
     	}
-    	return $cache;
+    	return $meta;
     }
     
     /**
      * get up-to-date css output (re-compile if neccessary)
      * 
      * @return string
-     * @uses self::getCacheChecked()
+     * @uses self::getMetaChecked()
      * @uses self::update()
      */
     public function getOutput(){
-    	$cache = $this->getCacheChecked();
-    	if($cache){
-    		return file_get_contents($cache['target']);
+    	$meta = $this->getMetaChecked();
+    	if($meta){
+    		return file_get_contents($meta['target']);
     	}
-    	return $this->update($cache);
+    	return $this->update($meta);
     }
     
-    protected function getCacheChecked(){
-        $cache = xcache_get($this->name);
-        if(!$cache){
+    protected function getMetaChecked(){
+        $meta = xcache_get($this->name);
+        if(!$meta){
             return null;
         }
     
         // check cache file
-        if(!is_file($cache['target'])){
-            if($this->debug) echo '/* target '.$cache['target'].' ('.$cache['time'].') missing */';
+        if(!is_file($meta['target'])){
+            if($this->debug) echo '/* target '.$meta['target'].' ('.$meta['time'].') missing */';
             return null;
         }
     
         // check if scss input source has changed
         $hash = md5($this->source);
-        if($cache['hash'] !== $hash){
-            if($this->debug) echo '/* input source hash ('.$cache['time'].') changed */';
+        if($meta['hash'] !== $hash){
+            if($this->debug) echo '/* input source hash ('.$meta['time'].') changed */';
             return null;
         }
     
         // check all files from cache for changes ever since cache was created
-        foreach($cache['files'] as $file){
-            if(!is_file($file) || filemtime($file) > $cache['time']){
-                if($this->debug) echo '/* updated '.$file.' (file:'.filemtime($file).' cache:'.$cache['time'].') */';
+        foreach($meta['files'] as $file){
+            if(!is_file($file) || filemtime($file) > $meta['time']){
+                if($this->debug) echo '/* updated '.$file.' (file:'.filemtime($file).' cache:'.$meta['time'].') */';
                 return null;
             }
         }
-        return $cache;
+        return $meta;
     }
     
     /**
@@ -270,17 +270,17 @@ class scss_cache{
     /**
      * compile local SCSS source and return resulting CSS
      * 
-     * @param array $cache
+     * @param array $meta
      * @return string
      * @throws Exception on error
      */
-    protected function compile(&$cache){
+    protected function compile(&$meta){
         $scssc = $this->scssc();
         
         $content = $scssc->compile($this->source);
         
         foreach($scssc->getParsedFiles() as $file){
-            $cache['files'][] = realpath($file);
+            $meta['files'][] = realpath($file);
         }
         
         return $content;
