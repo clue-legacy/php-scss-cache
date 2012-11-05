@@ -146,7 +146,7 @@ class scss_cache{
      * @return void
      */
     public function purge(){
-        $meta = xcache_get($this->name);
+        $meta = @xcache_get($this->name);
         if($meta){
             if(is_writeable($meta['target'])){
                 unlink($meta['target']);
@@ -176,7 +176,9 @@ class scss_cache{
     	if(file_put_contents($meta['target'],$content,LOCK_EX) === false){
     		throw new Exception('Unable to write compiled source to target cache file');
     	}
-    	xcache_set($this->name,$meta);
+    	if(!xcache_set($this->name,$meta)){
+    		throw new Exception('Unable to write cache meta data to temporary xcache');
+    	}
     	
     	return $content;
     }
@@ -212,7 +214,7 @@ class scss_cache{
     }
     
     protected function getMetaChecked(){
-        $meta = xcache_get($this->name);
+        $meta = @xcache_get($this->name);
         if(!$meta){
             return null;
         }
